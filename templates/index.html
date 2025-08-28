@@ -3,47 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-AI Responder</title>
+    <title>Gemini AI Responder</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
     <main class="container">
-        <div class="header-area">
-            <h1>Multi-AI Responder 🚀</h1>
-            <button id="clear-btn" class="secondary-btn">बातचीत साफ़ करें</button>
-        </div>
-        <p class="subtitle">एक सवाल पूछें और दो AI से जवाब पाएं!</p>
+        <h1>Gemini AI Responder 🚀</h1>
+        <p class="subtitle">कोई भी सवाल पूछें!</p>
         
-        <div id="history-container">
-            {% for item in history %}
-            <div class="history-item">
-                <div class="prompt">You: {{ item.prompt }}</div>
-                <div class="response">
-                    <strong>AI (Gemini):</strong> {{ item.gemini | safe }}
-                    <hr style="border-color: #374151; margin: 1rem 0;">
-                    <strong>AI (Perplexity):</strong> {{ item.perplexity | safe }}
-                </div>
+        <article>
+            <h2>Google Gemini</h2>
+            <div id="gemini-output" class="response-content">
+                <p>आपका जवाब यहाँ दिखेगा...</p>
             </div>
-            {% endfor %}
-        </div>
+            <button class="copy-btn" data-target="gemini-output">कॉपी</button>
+        </article>
 
         <div class="prompt-area">
             <textarea id="prompt-input" placeholder="जैसे: भारत के बारे में 3 रोचक तथ्य बताएं।"></textarea>
             <button id="submit-btn" aria-busy="false">जवाब पाएं</button>
-        </div>
-
-        <div class="grid" id="response-grid" style="display: none;">
-             <article>
-                <h2>Google Gemini</h2>
-                <div id="gemini-output" class="response-content"></div>
-                <button class="copy-btn" data-target="gemini-output">कॉपी</button>
-            </article>
-            <article>
-                <h2>Perplexity AI</h2>
-                <div id="perplexity-output" class="response-content"></div>
-                <button class="copy-btn" data-target="perplexity-output">कॉपी</button>
-            </article>
         </div>
     </main>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
