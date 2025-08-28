@@ -25,13 +25,14 @@ try:
 except Exception as e:
     print(f"API Key कॉन्फ़िगरेशन में त्रुटि: {e}")
 
-# --- बदलाव सिर्फ इस फंक्शन में है ---
+# --- बदलाव सिर्फ इस फंक्शन के मॉडल नाम में है ---
 def get_perplexity_response(prompt):
     url = "https://api.perplexity.ai/chat/completions"
     payload = {
-        "model": "llama-3-sonar-small-32k-online",
+        # ऑनलाइन मॉडल के बजाय स्टैंडर्ड चैट मॉडल का उपयोग करें
+        "model": "llama-3-sonar-small-32k-chat", 
         "messages": [{"role": "user", "content": prompt}],
-        "stream": False  # यह नई लाइन जोड़ी गई है
+        "stream": False
     }
     headers = {
         "accept": "application/json",
@@ -47,6 +48,7 @@ def get_perplexity_response(prompt):
         print(f"Perplexity Error: {e}")
         return f"Perplexity Error: {e}"
 
+# (बाकी का app.py कोड वैसा ही रहेगा)
 @app.route('/')
 def index():
     history = History.query.order_by(History.id).all()
@@ -57,7 +59,6 @@ def stream():
     prompt = request.args.get('prompt', '')
     if not prompt:
         return Response("Prompt is required", status=400)
-
     def generate():
         gemini_full_response = ""
         perplexity_full_response = ""
@@ -66,7 +67,6 @@ def stream():
             perplexity_full_response = pplx_res
             pplx_data = json.dumps({"perplexity": pplx_res})
             yield f"data: {pplx_data}\n\n"
-
             model = genai.GenerativeModel('gemini-1.5-flash-latest')
             stream = model.generate_content(prompt, stream=True)
             for chunk in stream:
@@ -74,18 +74,15 @@ def stream():
                     gemini_full_response += chunk.text
                     chunk_data = json.dumps({"gemini_chunk": chunk.text})
                     yield f"data: {chunk_data}\n\n"
-            
             new_entry = History(prompt=prompt, gemini=gemini_full_response, perplexity=perplexity_full_response)
             db.session.add(new_entry)
             db.session.commit()
-
             end_data = json.dumps({"event": "end"})
             yield f"data: {end_data}\n\n"
         except Exception as e:
             print(f"Streaming Error: {e}")
             error_data = json.dumps({"error": str(e)})
             yield f"data: {error_data}\n\n"
-
     return Response(stream_with_context(generate()), mimetype='text/event-stream')
 
 with app.app_context():
