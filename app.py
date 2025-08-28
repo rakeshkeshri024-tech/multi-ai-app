@@ -52,7 +52,7 @@ def index():
 @app.route('/stream')
 def stream():
     prompt = request.args.get('prompt', '')
-    hf_model = request.args.get('hf_model', 'HuggingFaceH4/zephyr-7b-beta')
+    hf_model = request.args.get('hf_model', 'mistralai/Mistral-7B-Instruct-v0.2')
 
     if not prompt:
         return Response("Prompt is required", status=400)
