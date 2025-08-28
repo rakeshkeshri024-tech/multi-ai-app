@@ -26,16 +26,16 @@ try:
 except Exception as e:
     print(f"API Key कॉन्फ़िगरेशन में त्रुटि: {e}")
 
+# --- Hugging Face फंक्शन को वापस पुराने और स्थिर तरीके पर बदला गया है ---
 def get_huggingface_response(prompt, model_name):
     try:
-        messages = [{"role": "user", "content": prompt}]
-        response_obj = hf_client.chat_completion(messages, model=model_name, max_tokens=250)
-        if response_obj.choices and len(response_obj.choices) > 0:
-            return response_obj.choices[0].message.content
-        return "Hugging Face से जवाब आया, लेकिन वह खाली था।"
+        # text_generation का उपयोग करें
+        response_text = hf_client.text_generation(prompt, model=model_name, max_new_tokens=250)
+        return response_text
     except Exception as e:
         print(f"Hugging Face Error: {e}")
-        return f"Hugging Face Error: {e}" # असली एरर दिखाएं
+        # असली एरर दिखाएं ताकि डीबग करना आसान हो
+        return f"Hugging Face Error: {e}"
 
 @app.route('/')
 def index():
@@ -45,8 +45,8 @@ def index():
 @app.route('/stream')
 def stream():
     prompt = request.args.get('prompt', '')
-    # --- बदलाव यहाँ है ---
-    hf_model = request.args.get('hf_model', 'Open-Orca/Mistral-7B-OpenOrca')
+    # --- डिफ़ॉल्ट मॉडल को बदला गया है ---
+    hf_model = request.args.get('hf_model', 'google/flan-t5-xxl')
     
     if not prompt:
         return Response("Prompt is required", status=400)
@@ -74,7 +74,6 @@ def stream():
 
             end_data = json.dumps({"event": "end"})
             yield f"data: {end_data}\n\n"
-
         except Exception as e:
             print(f"Streaming Error: {e}")
             error_data = json.dumps({"error": str(e)})
