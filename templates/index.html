@@ -22,7 +22,7 @@
                 <div class="response">
                     <strong>AI (Gemini):</strong> {{ item.gemini | safe }}
                     <hr style="border-color: #374151; margin: 1rem 0;">
-                    <strong>AI (Selected Model):</strong> {{ item.huggingface | safe }}
+                    <strong>AI (Perplexity):</strong> {{ item.perplexity | safe }}
                 </div>
             </div>
             {% endfor %}
@@ -40,14 +40,9 @@
                 <button class="copy-btn" data-target="gemini-output">कॉपी</button>
             </article>
             <article>
-                <div class="model-selector">
-                    <h2>Hugging Face</h2>
-                    <select id="hf-model-select">
-                        <option value="google/flan-t5-xxl">Google Flan-T5 (Reliable)</option>
-                    </select>
-                </div>
-                <div id="hf-output" class="response-content"></div>
-                <button class="copy-btn" data-target="hf-output">कॉपी</button>
+                <h2>Perplexity AI</h2>
+                <div id="perplexity-output" class="response-content"></div>
+                <button class="copy-btn" data-target="perplexity-output">कॉपी</button>
             </article>
         </div>
     </main>

@@ -1,9 +1,9 @@
 import os
 import json
+import requests # Perplexity के लिए requests लाइब्रेरी
 from flask import Flask, request, Response, render_template, stream_with_context
 from flask_sqlalchemy import SQLAlchemy
 import google.generativeai as genai
-from huggingface_hub import InferenceClient
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -17,25 +17,35 @@ class History(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     prompt = db.Column(db.String, nullable=False)
     gemini = db.Column(db.String, nullable=False)
-    huggingface = db.Column(db.String, nullable=False)
+    perplexity = db.Column(db.String, nullable=False) # huggingface को perplexity से बदला
 
 try:
     genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-    hf_token = os.getenv("HUGGINGFACE_API_TOKEN")
-    hf_client = InferenceClient(token=hf_token)
+    # Perplexity की Key लोड करें
+    pplx_api_key = os.getenv("PERPLEXITY_API_KEY")
 except Exception as e:
     print(f"API Key कॉन्फ़िगरेशन में त्रुटि: {e}")
 
-# --- Hugging Face फंक्शन को वापस पुराने और स्थिर तरीके पर बदला गया है ---
-def get_huggingface_response(prompt, model_name):
+# Perplexity AI का फंक्शन
+def get_perplexity_response(prompt):
+    url = "https://api.perplexity.ai/chat/completions"
+    payload = {
+        "model": "llama-3-sonar-small-32k-online",
+        "messages": [{"role": "user", "content": prompt}]
+    }
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": f"Bearer {pplx_api_key}"
+    }
     try:
-        # text_generation का उपयोग करें
-        response_text = hf_client.text_generation(prompt, model=model_name, max_new_tokens=250)
-        return response_text
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+        return data['choices'][0]['message']['content']
     except Exception as e:
-        print(f"Hugging Face Error: {e}")
-        # असली एरर दिखाएं ताकि डीबग करना आसान हो
-        return f"Hugging Face Error: {e}"
+        print(f"Perplexity Error: {e}")
+        return f"Perplexity Error: {e}"
 
 @app.route('/')
 def index():
@@ -45,20 +55,17 @@ def index():
 @app.route('/stream')
 def stream():
     prompt = request.args.get('prompt', '')
-    # --- डिफ़ॉल्ट मॉडल को बदला गया है ---
-    hf_model = request.args.get('hf_model', 'google/flan-t5-xxl')
-    
     if not prompt:
         return Response("Prompt is required", status=400)
 
     def generate():
         gemini_full_response = ""
-        hf_full_response = ""
+        perplexity_full_response = ""
         try:
-            hf_res = get_huggingface_response(prompt, hf_model)
-            hf_full_response = hf_res
-            hf_data = json.dumps({"huggingface": hf_res})
-            yield f"data: {hf_data}\n\n"
+            pplx_res = get_perplexity_response(prompt)
+            perplexity_full_response = pplx_res
+            pplx_data = json.dumps({"perplexity": pplx_res})
+            yield f"data: {pplx_data}\n\n"
 
             model = genai.GenerativeModel('gemini-1.5-flash-latest')
             stream = model.generate_content(prompt, stream=True)
@@ -68,7 +75,7 @@ def stream():
                     chunk_data = json.dumps({"gemini_chunk": chunk.text})
                     yield f"data: {chunk_data}\n\n"
             
-            new_entry = History(prompt=prompt, gemini=gemini_full_response, huggingface=hf_full_response)
+            new_entry = History(prompt=prompt, gemini=gemini_full_response, perplexity=perplexity_full_response)
             db.session.add(new_entry)
             db.session.commit()
 
