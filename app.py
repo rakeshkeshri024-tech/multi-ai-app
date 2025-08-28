@@ -1,6 +1,6 @@
 import os
 import json
-import requests # Perplexity के लिए requests लाइब्रेरी
+import requests
 from flask import Flask, request, Response, render_template, stream_with_context
 from flask_sqlalchemy import SQLAlchemy
 import google.generativeai as genai
@@ -17,21 +17,21 @@ class History(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     prompt = db.Column(db.String, nullable=False)
     gemini = db.Column(db.String, nullable=False)
-    perplexity = db.Column(db.String, nullable=False) # huggingface को perplexity से बदला
+    perplexity = db.Column(db.String, nullable=False)
 
 try:
     genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-    # Perplexity की Key लोड करें
     pplx_api_key = os.getenv("PERPLEXITY_API_KEY")
 except Exception as e:
     print(f"API Key कॉन्फ़िगरेशन में त्रुटि: {e}")
 
-# Perplexity AI का फंक्शन
+# --- बदलाव सिर्फ इस फंक्शन में है ---
 def get_perplexity_response(prompt):
     url = "https://api.perplexity.ai/chat/completions"
     payload = {
         "model": "llama-3-sonar-small-32k-online",
-        "messages": [{"role": "user", "content": prompt}]
+        "messages": [{"role": "user", "content": prompt}],
+        "stream": False  # यह नई लाइन जोड़ी गई है
     }
     headers = {
         "accept": "application/json",
