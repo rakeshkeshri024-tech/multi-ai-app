@@ -1,43 +1,29 @@
 import os
 import json
-import sqlite3
+from flask import Flask, request, Response, render_template, stream_with_context
+from flask_sqlalchemy import SQLAlchemy
 import google.generativeai as genai
 from huggingface_hub import InferenceClient
-from flask import Flask, request, Response, render_template, stream_with_context
 from dotenv import load_dotenv
 
 load_dotenv()
 app = Flask(__name__)
 
-# --- बदलाव यहाँ है ---
-# Render पर डेटा सेव करने के लिए एक सुरक्षित डायरेक्टरी का उपयोग करें
-DATA_DIR = '/var/data'
-if not os.path.exists(DATA_DIR):
-    os.makedirs(DATA_DIR)
-DATABASE = os.path.join(DATA_DIR, 'database.db')
-# --- बदलाव समाप्त ---
+# --- Database Configuration ---
+# Render पर DATABASE_URL एनवायरनमेंट वैरिएबल से URL लेगा
+# लोकल चलाने के लिए, यह एक sqlite फाइल बनाएगा
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///local_database.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 
-def get_db():
-    db = sqlite3.connect(DATABASE)
-    db.row_factory = sqlite3.Row
-    return db
+# --- Database Model ---
+class History(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    prompt = db.Column(db.String, nullable=False)
+    gemini = db.Column(db.String, nullable=False)
+    huggingface = db.Column(db.String, nullable=False)
 
-def init_db():
-    with app.app_context():
-        db = get_db()
-        cursor = db.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                prompt TEXT NOT NULL,
-                gemini TEXT NOT NULL,
-                huggingface TEXT NOT NULL
-            )
-        ''')
-        db.commit()
-        cursor.close()
-        db.close()
-
+# --- API Client Configuration ---
 try:
     genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
     hf_token = os.getenv("HUGGINGFACE_API_TOKEN")
@@ -45,6 +31,7 @@ try:
 except Exception as e:
     print(f"API Key कॉन्फ़िगरेशन में त्रुटि: {e}")
 
+# (Helper functions for AI responses remain the same)
 def get_huggingface_response(prompt, model_name):
     try:
         messages = [{"role": "user", "content": prompt}]
@@ -58,19 +45,15 @@ def get_huggingface_response(prompt, model_name):
 
 @app.route('/')
 def index():
-    db = get_db()
-    cursor = db.cursor()
-    cursor.execute('SELECT * FROM history ORDER BY id ASC')
-    history = cursor.fetchall()
-    cursor.close()
-    db.close()
+    # SQLAlchemy का उपयोग करके इतिहास पाएं
+    history = History.query.order_by(History.id).all()
     return render_template('index.html', history=history)
 
 @app.route('/stream')
 def stream():
     prompt = request.args.get('prompt', '')
     hf_model = request.args.get('hf_model', 'HuggingFaceH4/zephyr-7b-beta')
-    
+
     if not prompt:
         return Response("Prompt is required", status=400)
 
@@ -90,16 +73,11 @@ def stream():
                     gemini_full_response += chunk.text
                     chunk_data = json.dumps({"gemini_chunk": chunk.text})
                     yield f"data: {chunk_data}\n\n"
-            
-            db = get_db()
-            cursor = db.cursor()
-            cursor.execute(
-                'INSERT INTO history (prompt, gemini, huggingface) VALUES (?, ?, ?)',
-                (prompt, gemini_full_response, hf_full_response)
-            )
-            db.commit()
-            cursor.close()
-            db.close()
+
+            # SQLAlchemy का उपयोग करके डेटाबेस में सेव करें
+            new_entry = History(prompt=prompt, gemini=gemini_full_response, huggingface=hf_full_response)
+            db.session.add(new_entry)
+            db.session.commit()
 
             end_data = json.dumps({"event": "end"})
             yield f"data: {end_data}\n\n"
@@ -111,7 +89,9 @@ def stream():
 
     return Response(stream_with_context(generate()), mimetype='text/event-stream')
 
-init_db()
+# Create database tables if they don't exist
+with app.app_context():
+    db.create_all()
 
 if __name__ == '__main__':
     app.run(debug=True)
