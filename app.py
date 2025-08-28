@@ -1,6 +1,6 @@
 import os
 import json
-import sqlite3 # SQLite को इम्पोर्ट करें
+import sqlite3
 import google.generativeai as genai
 from huggingface_hub import InferenceClient
 from flask import Flask, request, Response, render_template, stream_with_context
@@ -9,15 +9,19 @@ from dotenv import load_dotenv
 load_dotenv()
 app = Flask(__name__)
 
-DATABASE = 'database.db'
+# --- बदलाव यहाँ है ---
+# Render पर डेटा सेव करने के लिए एक सुरक्षित डायरेक्टरी का उपयोग करें
+DATA_DIR = '/var/data'
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
+DATABASE = os.path.join(DATA_DIR, 'database.db')
+# --- बदलाव समाप्त ---
 
-# डेटाबेस बनाने और कनेक्ट करने का फंक्शन
 def get_db():
     db = sqlite3.connect(DATABASE)
-    db.row_factory = sqlite3.Row # डिक्शनरी की तरह डेटा पाने के लिए
+    db.row_factory = sqlite3.Row
     return db
 
-# ऐप शुरू होने पर टेबल बनाने का फंक्शन
 def init_db():
     with app.app_context():
         db = get_db()
@@ -34,8 +38,6 @@ def init_db():
         cursor.close()
         db.close()
 
-
-# API Clients को कॉन्फ़िगर करें
 try:
     genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
     hf_token = os.getenv("HUGGINGFACE_API_TOKEN")
@@ -44,7 +46,6 @@ except Exception as e:
     print(f"API Key कॉन्फ़िगरेशन में त्रुटि: {e}")
 
 def get_huggingface_response(prompt, model_name):
-    # ... इस फंक्शन में कोई बदलाव नहीं ...
     try:
         messages = [{"role": "user", "content": prompt}]
         response_obj = hf_client.chat_completion(messages, model=model_name, max_tokens=250)
@@ -57,7 +58,6 @@ def get_huggingface_response(prompt, model_name):
 
 @app.route('/')
 def index():
-    # पेज लोड होने पर डेटाबेस से पूरा इतिहास पाएं
     db = get_db()
     cursor = db.cursor()
     cursor.execute('SELECT * FROM history ORDER BY id ASC')
@@ -78,13 +78,11 @@ def stream():
         gemini_full_response = ""
         hf_full_response = ""
         try:
-            # Hugging Face का जवाब पाएं
             hf_res = get_huggingface_response(prompt, hf_model)
             hf_full_response = hf_res
             hf_data = json.dumps({"huggingface": hf_res})
             yield f"data: {hf_data}\n\n"
 
-            # Gemini का जवाब स्ट्रीम करें
             model = genai.GenerativeModel('gemini-1.5-flash-latest')
             stream = model.generate_content(prompt, stream=True)
             for chunk in stream:
@@ -93,7 +91,6 @@ def stream():
                     chunk_data = json.dumps({"gemini_chunk": chunk.text})
                     yield f"data: {chunk_data}\n\n"
             
-            # पूरी बातचीत को डेटाबेस में सेव करें
             db = get_db()
             cursor = db.cursor()
             cursor.execute(
@@ -114,7 +111,6 @@ def stream():
 
     return Response(stream_with_context(generate()), mimetype='text/event-stream')
 
-# ऐप शुरू होते ही डेटाबेस बनाएं
 init_db()
 
 if __name__ == '__main__':
