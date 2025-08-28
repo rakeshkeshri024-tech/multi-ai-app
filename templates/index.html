@@ -28,11 +28,13 @@
             <button class="example-prompt">कुछ नया सिखाओ</button>
         </div>
 
-        <div id="history-container">
-            </div>
+        <div id="history-container"></div>
 
         <div class="prompt-area">
-            <textarea id="prompt-input" placeholder="जैसे: भारत के बारे में 3 रोचक तथ्य बताएं।"></textarea>
+            <div class="prompt-input-wrapper">
+                <textarea id="prompt-input" placeholder="जैसे: भारत के बारे में 3 रोचक तथ्य बताएं।"></textarea>
+                <button id="mic-btn" class="icon-btn">🎤</button>
+            </div>
             <button id="submit-btn" aria-busy="false">जवाब पाएं</button>
         </div>
     </main>

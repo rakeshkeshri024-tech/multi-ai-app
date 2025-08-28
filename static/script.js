@@ -5,11 +5,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const historyContainer = document.getElementById('history-container');
     const themeToggle = document.getElementById('theme-toggle');
     const examplePrompts = document.querySelectorAll('.example-prompt');
+    const micBtn = document.getElementById('mic-btn');
 
     // --- 2. State Management ---
     let conversationHistory = [];
 
-    // --- 3. Event Listeners ---
+    // --- 3. Event Listeners & Logic ---
+
+    // Theme Switcher Logic
     if (themeToggle) {
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
@@ -20,6 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('theme', theme);
         });
     }
+
+    // Example Prompts Logic
     examplePrompts.forEach(button => {
         button.addEventListener('click', (e) => {
             promptInput.value = e.target.innerText;
@@ -27,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
+    // Submit Prompt Button Logic
     if (submitBtn) {
         submitBtn.addEventListener('click', () => {
             const prompt = promptInput.value;
@@ -40,14 +46,59 @@ document.addEventListener('DOMContentLoaded', () => {
             submitBtn.setAttribute('aria-busy', 'true');
             submitBtn.disabled = true;
             
-            // अब हम सिर्फ यूज़र के प्रॉम्प्ट तक की हिस्ट्री भेज रहे हैं
+            // Contextual conversation logic
             const historyForApi = conversationHistory.slice(0, -1);
             streamResponse(historyForApi);
             promptInput.value = '';
         });
     }
     
+    // Web Speech API (Voice Input) Logic
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    if (SpeechRecognition && micBtn) {
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'hi-IN';
+        recognition.interimResults = false;
+
+        micBtn.addEventListener('click', () => {
+            if (micBtn.classList.contains('is-listening')) {
+                recognition.stop();
+            } else {
+                try { recognition.start(); } catch(e) { alert("आवाज़ पहचानना पहले से ही सक्रिय है।"); }
+            }
+        });
+        recognition.onstart = () => { micBtn.classList.add('is-listening'); promptInput.placeholder = 'अब बोलें...'; };
+        recognition.onresult = (event) => { promptInput.value = event.results[0][0].transcript; };
+        recognition.onerror = (event) => { console.error('Speech recognition error:', event.error); alert('आवाज़ पहचानने में त्रुटि हुई: ' + event.error); };
+        recognition.onend = () => { micBtn.classList.remove('is-listening'); promptInput.placeholder = 'जैसे: भारत के बारे में 3 रोचक तथ्य बताएं।'; };
+    } else if (micBtn) {
+        micBtn.style.display = 'none';
+    }
+
+    // Text-to-Speech (Voice Output) Logic
+    historyContainer.addEventListener('click', (e) => {
+        const speakerBtn = e.target.closest('.speaker-btn');
+        if (speakerBtn) {
+            const textToSpeak = speakerBtn.closest('.history-item.ai').querySelector('.ai-content').innerText;
+            speakText(textToSpeak);
+        }
+    });
+
     // --- 4. Helper Functions ---
+
+    function speakText(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'hi-IN';
+            window.speechSynthesis.speak(utterance);
+        } else {
+            alert('आपका ब्राउज़र Text-to-Speech को सपोर्ट नहीं करता।');
+        }
+    }
+
     async function streamResponse(history) {
         const latestMessageIndex = conversationHistory.length - 1;
         try {
@@ -59,11 +110,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
-
             while (true) {
                 const { value, done } = await reader.read();
                 if (done) break;
-
                 const chunk = decoder.decode(value, { stream: true });
                 const lines = chunk.split('\n\n');
                 lines.forEach(line => {
@@ -104,9 +153,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (index === conversationHistory.length - 1 && item.content === '') {
                     aiContent = `<div class="typing-indicator"><span></span><span></span><span></span></div>`;
                 } else {
-                    aiContent = `<div>${marked.parse(item.content)}</div>`;
+                    aiContent = `<div class="ai-content">${marked.parse(item.content)}</div>`;
                 }
-                historyItem.innerHTML = `<strong>Gemini AI</strong>${aiContent}`;
+                historyItem.innerHTML = `
+                    <div class="ai-message-header">
+                        <strong>Gemini AI</strong>
+                        <button class="icon-btn speaker-btn">🔊</button>
+                    </div>
+                    ${aiContent}
+                `;
             }
             historyContainer.appendChild(historyItem);
         });

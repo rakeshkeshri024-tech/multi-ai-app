@@ -1,37 +1,9 @@
 /* --- 1. Theme Variables --- */
-:root {
-    --background-color: #111827;
-    --card-color: #1f2937;
-    --border-color: #374151;
-    --text-color: #d1d5db;
-    --subtle-text-color: #9ca3af;
-    --primary-text-color: #f9fafb;
-    --user-message-color: #374151;
-}
-
-html[data-theme='light'] {
-    --background-color: #f3f4f6;
-    --card-color: #ffffff;
-    --border-color: #e5e7eb;
-    --text-color: #374151;
-    --subtle-text-color: #6b7280;
-    --primary-text-color: #111827;
-    --user-message-color: #e5e7eb;
-}
+:root { --background-color: #111827; --card-color: #1f2937; --border-color: #374151; --text-color: #d1d5db; --subtle-text-color: #9ca3af; --primary-text-color: #f9fafb; --user-message-color: #374151; }
+html[data-theme='light'] { --background-color: #f3f4f6; --card-color: #ffffff; --border-color: #e5e7eb; --text-color: #374151; --subtle-text-color: #6b7280; --primary-text-color: #111827; --user-message-color: #e5e7eb; }
 
 /* --- 2. General Body Styles --- */
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    line-height: 1.6;
-    background-color: var(--background-color);
-    color: var(--text-color);
-    padding: 2rem;
-    transition: background-color 0.3s, color 0.3s;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; background-color: var(--background-color); color: var(--text-color); padding: 2rem; transition: background-color 0.3s, color 0.3s; display: flex; flex-direction: column; min-height: 100vh; }
 main.container { max-width: 900px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; flex-grow: 1; }
 h1 { background: -webkit-linear-gradient(45deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; margin: 0; }
 p.subtitle { text-align: center; margin-bottom: 1rem; color: var(--subtle-text-color); }
@@ -48,7 +20,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 /* --- 4. Example Prompts --- */
 .example-prompts { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
-.example-prompt { background-color: var(--card-color); border: 1px solid var(--border-color); color: var(--text-color); width: auto; font-weight: normal; padding: 8px 16px; border-radius: 8px; }
+.example-prompt { background-color: var(--card-color); border: 1px solid var(--border-color); color: var(--text-color); width: auto; font-weight: normal; padding: 8px 16px; border-radius: 8px; cursor: pointer; }
 .example-prompt:hover { border-color: #38bdf8; color: #38bdf8; background-color: var(--card-color); }
 
 /* --- 5. History and Chat Area --- */
@@ -56,13 +28,13 @@ input:checked + .slider:before { transform: translateX(20px); }
 .history-item { padding: 1rem 1.5rem; border-radius: 12px; transition: background-color 0.3s; max-width: 85%; word-wrap: break-word; }
 .history-item.user { background-color: var(--user-message-color); align-self: flex-end; }
 .history-item.ai { background-color: var(--card-color); border: 1px solid var(--border-color); align-self: flex-start; }
-.history-item strong { color: var(--subtle-text-color); font-size: 0.9em; margin-bottom: 0.5rem; display: block; }
 .history-item p { margin: 0; }
 .history-item pre { background-color: var(--background-color); padding: 1rem; border-radius: 8px; overflow-x: auto; margin-top: 0.5rem; }
 
 /* --- 6. Prompt Input Area --- */
 .prompt-area { position: sticky; bottom: 0; background-color: var(--background-color); padding: 1rem 0; margin-top: auto; transition: background-color 0.3s; }
-textarea { background-color: var(--card-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; min-height: 80px; margin-bottom: 1rem; width: 100%; resize: vertical; }
+.prompt-input-wrapper { position: relative; display: flex; width: 100%; }
+.prompt-input-wrapper textarea { width: 100%; padding-right: 50px; background-color: var(--card-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; min-height: 80px; margin-bottom: 1rem; resize: vertical; }
 button#submit-btn { background-color: #38bdf8; border: none; border-radius: 8px; color: #fff; font-weight: bold; padding: 12px 20px; width: 100%; cursor: pointer; transition: background-color 0.3s ease; }
 button#submit-btn:hover { background-color: #0ea5e9; }
 button#submit-btn[aria-busy="true"] { background-color: #374151; }
@@ -74,9 +46,14 @@ button#submit-btn[aria-busy="true"] { background-color: #374151; }
 .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
 @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
 
-/* --- 8. Responsive Design for Mobile --- */
-@media (max-width: 768px) {
-    body { padding: 1rem; }
-    .header-area { flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
-    .history-item { max-width: 95%; }
-}
+/* --- 8. Icon Buttons (Mic & Speaker) --- */
+.icon-btn { background: transparent; border: none; font-size: 1.5rem; cursor: pointer; width: auto; padding: 0 5px; color: var(--subtle-text-color); transition: color 0.2s; }
+.icon-btn:hover { color: var(--primary-text-color); }
+.prompt-input-wrapper .icon-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-60%); }
+.icon-btn.is-listening { color: #ef4444; }
+.ai-message-header { display: flex; justify-content: space-between; align-items: center; }
+.ai-message-header strong { margin-bottom: 0; }
+.icon-btn.speaker-btn { font-size: 1.2rem; transform: none; position: static; }
+
+/* --- 9. Responsive Design for Mobile --- */
+@media (max-width: 768px) { body { padding: 1rem; } .header-area { flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; } .history-item { max-width: 95%; } }
