@@ -17,16 +17,33 @@ except Exception as e:
 def index():
     return render_template('index.html')
 
-@app.route('/stream')
+# --- मुख्य बदलाव यहाँ है ---
+@app.route('/stream', methods=['POST']) # अब यह सिर्फ POST रिक्वेस्ट लेता है
 def stream():
-    prompt = request.args.get('prompt', '')
-    if not prompt:
-        return Response("Prompt is required", status=400)
+    data = request.json
+    history = data.get('history', [])
+    
+    if not history:
+        return Response("History is required", status=400)
 
     def generate():
         try:
             model = genai.GenerativeModel('gemini-1.5-flash-latest')
-            stream = model.generate_content(prompt, stream=True)
+            
+            # Gemini API के लिए बातचीत का प्रारूप तैयार करें
+            gemini_history = []
+            for message in history:
+                # Gemini API 'ai' role को 'model' कहता है
+                role = 'model' if message['role'] == 'ai' else 'user'
+                gemini_history.append({'role': role, 'parts': [{'text': message['content']}]})
+            
+            # Gemini को पूरी हिस्ट्री के साथ शुरू करें
+            chat = model.start_chat(history=gemini_history)
+            
+            # आखिरी प्रॉम्प्ट को भेजें
+            last_prompt = history[-1]['content']
+            stream = chat.send_message(last_prompt, stream=True)
+            
             for chunk in stream:
                 if chunk.text:
                     chunk_data = json.dumps({"gemini_chunk": chunk.text})
@@ -38,7 +55,7 @@ def stream():
             print(f"Streaming Error: {e}")
             error_data = json.dumps({"error": str(e)})
             yield f"data: {error_data}\n\n"
-
+    
     return Response(stream_with_context(generate()), mimetype='text/event-stream')
 
 if __name__ == '__main__':

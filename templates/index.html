@@ -9,16 +9,27 @@
 </head>
 <body>
     <main class="container">
-        <h1>Gemini AI Responder 🚀</h1>
+        <div class="header-area">
+            <h1>Gemini AI Responder 🚀</h1>
+            <div class="theme-switcher">
+                <label for="theme-toggle">☀️</label>
+                <label class="switch">
+                    <input type="checkbox" id="theme-toggle">
+                    <span class="slider round"></span>
+                </label>
+                <label for="theme-toggle">🌙</label>
+            </div>
+        </div>
         <p class="subtitle">कोई भी सवाल पूछें!</p>
         
-        <article>
-            <h2>Google Gemini</h2>
-            <div id="gemini-output" class="response-content">
-                <p>आपका जवाब यहाँ दिखेगा...</p>
+        <div class="example-prompts">
+            <button class="example-prompt">एक कविता लिखो</button>
+            <button class="example-prompt">ईमेल लिखने में मदद करो</button>
+            <button class="example-prompt">कुछ नया सिखाओ</button>
+        </div>
+
+        <div id="history-container">
             </div>
-            <button class="copy-btn" data-target="gemini-output">कॉपी</button>
-        </article>
 
         <div class="prompt-area">
             <textarea id="prompt-input" placeholder="जैसे: भारत के बारे में 3 रोचक तथ्य बताएं।"></textarea>
