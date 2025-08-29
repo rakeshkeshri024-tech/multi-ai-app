@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Gemini AI</title>
+    <title>Verify OTP - Gemini AI</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         .auth-container { max-width: 400px; margin: 4rem auto; }
@@ -12,7 +12,8 @@
 </head>
 <body>
     <main class="container auth-container">
-        <h1>Create an Account</h1>
+        <h1>Enter OTP</h1>
+        <p>An OTP has been sent to your email address.</p>
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -20,11 +21,10 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-        <form method="POST" action="{{ url_for('register') }}">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="email" name="email" placeholder="Email" required> <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Send OTP</button> </form>
-        <p>Already have an account? <a href="{{ url_for('login') }}">Log in here</a>.</p>
+        <form method="POST" action="{{ url_for('verify_otp') }}">
+            <input type="text" name="otp" placeholder="6-Digit OTP" required>
+            <button type="submit">Verify & Register</button>
+        </form>
     </main>
 </body>
 </html>

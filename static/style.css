@@ -57,3 +57,49 @@ button#submit-btn[aria-busy="true"] { background-color: #374151; }
 
 /* --- 9. Responsive Design for Mobile --- */
 @media (max-width: 768px) { body { padding: 1rem; } .header-area { flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; } .history-item { max-width: 95%; } }
+/* --- 11. User Info Styles (Add at the end) --- */
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.username {
+    color: var(--subtle-text-color);
+}
+
+a.secondary-btn {
+    text-decoration: none;
+    background-color: #374151;
+    width: auto;
+    padding: 8px 16px;
+    font-size: 0.9em;
+    border-radius: 8px;
+    color: white;
+}
+a.secondary-btn:hover {
+    background-color: #4b5563;
+}
+/* --- 11. User Info Styles (Add at the end) --- */
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.username {
+    color: var(--subtle-text-color);
+}
+
+a.secondary-btn {
+    text-decoration: none;
+    background-color: #374151;
+    width: auto;
+    padding: 8px 16px;
+    font-size: 0.9em;
+    border-radius: 8px;
+    color: white;
+}
+a.secondary-btn:hover {
+    background-color: #4b5563;
+}
