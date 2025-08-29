@@ -3,6 +3,7 @@ import json
 import random
 from flask import Flask, request, Response, render_template, stream_with_context, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 import google.generativeai as genai
@@ -10,25 +11,43 @@ from dotenv import load_dotenv
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
+# --- App Setup ---
 load_dotenv()
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'a-very-secret-key-that-is-hard-to-guess')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///local_database.db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
 
+# --- Configuration ---
+# This ensures the instance folder is created and the database path is always correct.
+basedir = os.path.abspath(os.path.dirname(__file__))
+instance_path = os.path.join(basedir, 'instance')
+os.makedirs(instance_path, exist_ok=True)
+
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'a-very-secret-key-that-is-hard-to-guess')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL') or \
+    'sqlite:///' + os.path.join(instance_path, 'local_database.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# --- Database & Migration Setup ---
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+# --- Login Manager Setup ---
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+# --- Database Models ---
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     histories = db.relationship('History', backref='author', lazy=True)
-    def set_password(self, password): self.password_hash = generate_password_hash(password)
-    def check_password(self, password): return check_password_hash(self.password_hash, password)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
 class History(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -40,9 +59,10 @@ class History(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# --- Helper Functions ---
 def send_otp_email(to_email, otp):
     message = Mail(
-        from_email='ckeshri024@gmail.com', # <-- अपना वेरीफाइड SendGrid ईमेल यहाँ डालें
+        from_email='ckeshri024@gmail.com',  # Replace with your verified SendGrid sender
         to_emails=to_email,
         subject='Your OTP for Gemini AI App',
         html_content=f'<strong>Your OTP is: {otp}</strong>')
@@ -54,24 +74,23 @@ def send_otp_email(to_email, otp):
         print(f"SendGrid Error: {e}")
         return False
 
+# --- AI Configuration ---
 try:
     genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 except Exception as e:
-    print(f"API Key कॉन्फ़िगरेशन में त्रुटि: {e}")
+    print(f"API Key Configuration Error: {e}")
 
+# --- Routes ---
 @app.route('/')
 @login_required
 def index():
     history = History.query.filter_by(author=current_user).order_by(History.id).all()
-    # Markdown को HTML में बदलें
-    processed_history = []
-    for item in history:
-        processed_history.append({'prompt': item.prompt, 'gemini': item.gemini}) # No markdown here, JS handles it
-    return render_template('index.html', history=processed_history)
+    return render_template('index.html', history=history)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if current_user.is_authenticated: return redirect(url_for('index'))
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
     if request.method == 'POST':
         username = request.form.get('username')
         email = request.form.get('email')
@@ -82,19 +101,23 @@ def register():
         if User.query.filter_by(email=email).first():
             flash('Email address already registered.', 'error')
             return redirect(url_for('register'))
+        
         otp = random.randint(100000, 999999)
         session['otp'] = otp
         session['registration_data'] = {'username': username, 'email': email, 'password': password}
+        
         if send_otp_email(email, otp):
             return redirect(url_for('verify_otp'))
         else:
             flash('Failed to send OTP. Please check your email or try again.', 'error')
             return redirect(url_for('register'))
+            
     return render_template('register.html')
 
 @app.route('/verify_otp', methods=['GET', 'POST'])
 def verify_otp():
-    if 'registration_data' not in session: return redirect(url_for('register'))
+    if 'registration_data' not in session:
+        return redirect(url_for('register'))
     if request.method == 'POST':
         submitted_otp = request.form.get('otp')
         if submitted_otp and session.get('otp') == int(submitted_otp):
@@ -113,7 +136,8 @@ def verify_otp():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if current_user.is_authenticated: return redirect(url_for('index'))
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
@@ -147,27 +171,30 @@ def stream():
             for message in history_from_js:
                 role = 'model' if message['role'] == 'ai' else 'user'
                 gemini_history.append({'role': role, 'parts': [{'text': message['content']}]})
+            
             last_prompt_text = history_from_js[-1]['content']
-            chat = model.start_chat(history=gemini_history[:-1])
-            stream = chat.send_message(gemini_history[-1]['parts'], stream=True)
+            chat = model.start_chat(history=gemini_history)
+            
+            stream = chat.send_message(last_prompt_text, stream=True)
+            
             for chunk in stream:
                 if chunk.text:
                     gemini_full_response += chunk.text
                     chunk_data = json.dumps({"gemini_chunk": chunk.text})
                     yield f"data: {chunk_data}\n\n"
+            
             new_entry = History(prompt=last_prompt_text, gemini=gemini_full_response, author=current_user)
             db.session.add(new_entry)
             db.session.commit()
+            
             end_data = json.dumps({"event": "end"})
             yield f"data: {end_data}\n\n"
         except Exception as e:
             print(f"Streaming Error: {e}")
             error_data = json.dumps({"error": str(e)})
             yield f"data: {error_data}\n\n"
+    
     return Response(stream_with_context(generate()), mimetype='text/event-stream')
-
-with app.app_context():
-    db.create_all()
 
 if __name__ == '__main__':
     app.run(debug=True)

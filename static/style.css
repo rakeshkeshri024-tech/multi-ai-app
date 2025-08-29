@@ -1,14 +1,82 @@
 /* --- 1. Theme Variables --- */
-:root { --background-color: #111827; --card-color: #1f2937; --border-color: #374151; --text-color: #d1d5db; --subtle-text-color: #9ca3af; --primary-text-color: #f9fafb; --user-message-color: #374151; }
-html[data-theme='light'] { --background-color: #f3f4f6; --card-color: #ffffff; --border-color: #e5e7eb; --text-color: #374151; --subtle-text-color: #6b7280; --primary-text-color: #111827; --user-message-color: #e5e7eb; }
+:root {
+    --card-color: rgba(31, 41, 55, 0.6); /* Semi-transparent for glass effect */
+    --border-color: rgba(75, 85, 99, 0.5);
+    --text-color: #e5e7eb;
+    --subtle-text-color: #9ca3af;
+    --primary-text-color: #f9fafb;
+    --user-message-color: rgba(55, 65, 81, 0.7);
+    --background-color-for-input: #111827; /* Darker background for inputs */
+}
 
-/* --- 2. General Body Styles --- */
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; background-color: var(--background-color); color: var(--text-color); padding: 2rem; transition: background-color 0.3s, color 0.3s; display: flex; flex-direction: column; min-height: 100vh; }
+html[data-theme='light'] {
+    --card-color: rgba(255, 255, 255, 0.6);
+    --border-color: rgba(229, 231, 235, 0.7);
+    --text-color: #374151;
+    --subtle-text-color: #6b7280;
+    --primary-text-color: #111827;
+    --user-message-color: #e5e7eb;
+    --background-color-for-input: #f9fafb;
+}
+
+/* --- 2. Animated Aurora Background --- */
+@keyframes moveGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+    padding: 2rem;
+    transition: color 0.3s;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #111827;
+    background-image: 
+        radial-gradient(at 20% 25%, hsla(268, 75%, 55%, 0.3) 0px, transparent 50%),
+        radial-gradient(at 75% 30%, hsla(220, 75%, 60%, 0.3) 0px, transparent 50%),
+        radial-gradient(at 10% 80%, hsla(320, 65%, 50%, 0.3) 0px, transparent 50%),
+        radial-gradient(at 80% 90%, hsla(190, 75%, 55%, 0.3) 0px, transparent 50%);
+    background-size: 200% 200%;
+    animation: moveGradient 20s ease infinite;
+}
+
+/* --- 3. General Styles --- */
 main.container { max-width: 900px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; flex-grow: 1; }
-h1 { background: -webkit-linear-gradient(45deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; margin: 0; }
+h1 { background: -webkit-linear-gradient(45deg, #a5b4fc, #f9fafb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; margin: 0; }
 p.subtitle { text-align: center; margin-bottom: 1rem; color: var(--subtle-text-color); }
 
-/* --- 3. Header and Theme Switcher --- */
+/* --- 4. Auth Card with Glass Effect --- */
+.auth-card {
+    max-width: 420px;
+    margin: 3rem auto;
+    padding: 2.5rem;
+    background-color: var(--card-color);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+.auth-header .logo { font-size: 2.5rem; margin-bottom: 1rem; text-align: center;}
+.auth-header h1 { color: var(--primary-text-color); background: none; -webkit-text-fill-color: initial; text-align: center;}
+.auth-header p { color: var(--subtle-text-color); margin-top: 0.5rem; text-align: center;}
+.auth-card form label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-color); }
+.auth-card form input { width: 100%; padding: 12px; margin-bottom: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--background-color-for-input); color: var(--text-color); transition: border-color 0.3s, box-shadow 0.3s; }
+.auth-card form input:focus { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); outline: none; }
+.auth-card form button.primary-btn { width: 100%; padding: 12px; background-color: #38bdf8; color: white; font-weight: bold; border-radius: 8px; border: none; cursor: pointer; }
+.auth-card form button.primary-btn:hover { background-color: #0ea5e9; }
+.auth-footer { text-align: center; margin-top: 1.5rem; font-size: 0.9em; }
+.auth-footer a { color: #38bdf8; text-decoration: none; font-weight: 500; }
+.auth-footer a:hover { text-decoration: underline; }
+.flash-error { color: #f87171; background-color: rgba(248, 113, 113, 0.1); border: 1px solid #f87171; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center; }
+.flash-success { color: #4ade80; background-color: rgba(74, 222, 128, 0.1); border: 1px solid #4ade80; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center; }
+
+/* --- 5. Main App Styles (Header, Chat, etc.) --- */
 .header-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
 .theme-switcher { display: flex; align-items: center; gap: 0.5rem; }
 .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
@@ -17,36 +85,26 @@ p.subtitle { text-align: center; margin-bottom: 1rem; color: var(--subtle-text-c
 .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
 input:checked + .slider { background-color: #38bdf8; }
 input:checked + .slider:before { transform: translateX(20px); }
-
-/* --- 4. Example Prompts --- */
 .example-prompts { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
 .example-prompt { background-color: var(--card-color); border: 1px solid var(--border-color); color: var(--text-color); width: auto; font-weight: normal; padding: 8px 16px; border-radius: 8px; cursor: pointer; }
 .example-prompt:hover { border-color: #38bdf8; color: #38bdf8; background-color: var(--card-color); }
-
-/* --- 5. History and Chat Area --- */
 #history-container { width: 100%; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; flex-grow: 1; }
 .history-item { padding: 1rem 1.5rem; border-radius: 12px; transition: background-color 0.3s; max-width: 85%; word-wrap: break-word; }
 .history-item.user { background-color: var(--user-message-color); align-self: flex-end; }
 .history-item.ai { background-color: var(--card-color); border: 1px solid var(--border-color); align-self: flex-start; }
 .history-item p { margin: 0; }
-.history-item pre { background-color: var(--background-color); padding: 1rem; border-radius: 8px; overflow-x: auto; margin-top: 0.5rem; }
-
-/* --- 6. Prompt Input Area --- */
+.history-item pre { background-color: var(--background-color-for-input); padding: 1rem; border-radius: 8px; overflow-x: auto; margin-top: 0.5rem; }
 .prompt-area { position: sticky; bottom: 0; background-color: var(--background-color); padding: 1rem 0; margin-top: auto; transition: background-color 0.3s; }
 .prompt-input-wrapper { position: relative; display: flex; width: 100%; }
 .prompt-input-wrapper textarea { width: 100%; padding-right: 50px; background-color: var(--card-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; min-height: 80px; margin-bottom: 1rem; resize: vertical; }
 button#submit-btn { background-color: #38bdf8; border: none; border-radius: 8px; color: #fff; font-weight: bold; padding: 12px 20px; width: 100%; cursor: pointer; transition: background-color 0.3s ease; }
 button#submit-btn:hover { background-color: #0ea5e9; }
 button#submit-btn[aria-busy="true"] { background-color: #374151; }
-
-/* --- 7. Typing Indicator --- */
 .typing-indicator { display: flex; align-items: center; padding: 10px 0; }
 .typing-indicator span { height: 8px; width: 8px; background-color: var(--subtle-text-color); border-radius: 50%; margin: 0 4px; animation: bounce 1.4s infinite ease-in-out both; }
 .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
 .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
 @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
-
-/* --- 8. Icon Buttons (Mic & Speaker) --- */
 .icon-btn { background: transparent; border: none; font-size: 1.5rem; cursor: pointer; width: auto; padding: 0 5px; color: var(--subtle-text-color); transition: color 0.2s; }
 .icon-btn:hover { color: var(--primary-text-color); }
 .prompt-input-wrapper .icon-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-60%); }
@@ -54,52 +112,9 @@ button#submit-btn[aria-busy="true"] { background-color: #374151; }
 .ai-message-header { display: flex; justify-content: space-between; align-items: center; }
 .ai-message-header strong { margin-bottom: 0; }
 .icon-btn.speaker-btn { font-size: 1.2rem; transform: none; position: static; }
-
-/* --- 9. Responsive Design for Mobile --- */
+.header-controls { display: flex; align-items: center; gap: 1.5rem; }
+.username { color: var(--subtle-text-color); }
+a.secondary-btn { text-decoration: none; background-color: #374151; width: auto; padding: 8px 16px; font-size: 0.9em; border-radius: 8px; color: white; }
+a.secondary-btn:hover { background-color: #4b5563; }
 @media (max-width: 768px) { body { padding: 1rem; } .header-area { flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; } .history-item { max-width: 95%; } }
-/* --- 11. User Info Styles (Add at the end) --- */
-.header-controls {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-}
 
-.username {
-    color: var(--subtle-text-color);
-}
-
-a.secondary-btn {
-    text-decoration: none;
-    background-color: #374151;
-    width: auto;
-    padding: 8px 16px;
-    font-size: 0.9em;
-    border-radius: 8px;
-    color: white;
-}
-a.secondary-btn:hover {
-    background-color: #4b5563;
-}
-/* --- 11. User Info Styles (Add at the end) --- */
-.header-controls {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-}
-
-.username {
-    color: var(--subtle-text-color);
-}
-
-a.secondary-btn {
-    text-decoration: none;
-    background-color: #374151;
-    width: auto;
-    padding: 8px 16px;
-    font-size: 0.9em;
-    border-radius: 8px;
-    color: white;
-}
-a.secondary-btn:hover {
-    background-color: #4b5563;
-}
