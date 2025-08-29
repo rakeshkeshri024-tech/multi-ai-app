@@ -11,13 +11,9 @@
     <main class="container">
         <div class="header-area">
             <h1>Gemini AI Responder 🚀</h1>
-            <div class="theme-switcher">
-                <label for="theme-toggle">☀️</label>
-                <label class="switch">
-                    <input type="checkbox" id="theme-toggle">
-                    <span class="slider round"></span>
-                </label>
-                <label for="theme-toggle">🌙</label>
+            <div class="user-info">
+                <span>Welcome, {{ current_user.username }}</span>
+                <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
             </div>
         </div>
         <p class="subtitle">कोई भी सवाल पूछें!</p>
@@ -27,9 +23,20 @@
             <button class="example-prompt">ईमेल लिखने में मदद करो</button>
             <button class="example-prompt">कुछ नया सिखाओ</button>
         </div>
-
-        <div id="history-container"></div>
-
+        <div id="history-container">
+            {% for item in history %}
+            <div class="history-item user">
+                <strong>You</strong><p>{{ item.prompt }}</p>
+            </div>
+            <div class="history-item ai">
+                <div class="ai-message-header">
+                    <strong>Gemini AI</strong>
+                    <button class="icon-btn speaker-btn">🔊</button>
+                </div>
+                <div class="ai-content">{{ marked.parse(item.gemini) | safe }}</div>
+            </div>
+            {% endfor %}
+        </div>
         <div class="prompt-area">
             <div class="prompt-input-wrapper">
                 <textarea id="prompt-input" placeholder="जैसे: भारत के बारे में 3 रोचक तथ्य बताएं।"></textarea>
